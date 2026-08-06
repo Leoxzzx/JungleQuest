@@ -1,9 +1,8 @@
 import streamlit as st
 import google.generativeai as genai
 import pypdf
-import re
 
-# Configuração da página (otimizada para celular e notebook)
+# Configuração da página
 st.set_page_config(page_title="IA de Estudos", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
 
 st.title("🎓 Plataforma de Estudos com IA")
@@ -59,16 +58,13 @@ with tab1:
 with tab2:
     link_youtube = st.text_input("Cole o link do vídeo do YouTube:")
     if link_youtube:
-        # Trata o link limpando parâmetros extras como ?si=...
         clean_url = link_youtube.split("?")[0].split("&")[0]
         link_yt_valido = clean_url
         st.success(f"Link do YouTube registrado!")
 
 # Botão de Geração de Questões
 st.write("---")
-if st.button(model = genai.GenerativeModel('gemini-2.5-flash')
-             
- ):
+if st.button("🚀 Gerar Questões"):
     if not api_key:
         st.warning("⚠️ Cole sua Gemini API Key na barra lateral para continuar.")
     elif not conteudo_processado and not link_yt_valido:
@@ -76,7 +72,7 @@ if st.button(model = genai.GenerativeModel('gemini-2.5-flash')
     else:
         with st.spinner("⏳ Analisando conteúdo e criando as questões com IA..."):
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-2.5-flash')
                 
                 contexto_entrada = ""
                 if link_yt_valido:
