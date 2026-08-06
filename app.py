@@ -95,7 +95,7 @@ if st.button("🚀 Gerar Questões"):
                 """
                 
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-2.0-flash',
                     contents=prompt,
                 )
                 
@@ -103,4 +103,4 @@ if st.button("🚀 Gerar Questões"):
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar as questões: {e}")
-            
+                
