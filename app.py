@@ -1,7 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
-from youtube_transcript_api import YouTubeTranscriptApi
 import pypdf
+import re
 
 # Configuração da página (otimizada para celular e notebook)
 st.set_page_config(page_title="IA de Estudos", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
@@ -39,6 +39,7 @@ st.write("### 📥 Enviar Material para Gerar Questões")
 tab1, tab2 = st.tabs(["📄 Enviar Arquivo / Texto", "🔗 Link do YouTube"])
 
 conteudo_processado = ""
+link_yt_valido = ""
 
 with tab1:
     arquivo = st.file_uploader("Envie um arquivo PDF ou TXT:", type=["pdf", "txt"])
@@ -58,45 +59,42 @@ with tab1:
 with tab2:
     link_youtube = st.text_input("Cole o link do vídeo do YouTube:")
     if link_youtube:
-        try:
-            if "v=" in link_youtube:
-                video_id = link_youtube.split("v=")[-1].split("&")[0]
-            elif "youtu.be/" in link_youtube:
-                video_id = link_youtube.split("youtu.be/")[-1].split("?")[0]
-            else:
-                video_id = link_youtube
-
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['pt', 'pt-BR', 'en'])
-            conteudo_processado = " ".join([i['text'] for i in transcript])
-            st.success("Legenda/Transcrição do vídeo extraída com sucesso!")
-        except Exception as e:
-            st.error("Não foi possível pegar a legenda automaticamente. Certifique-se de que o vídeo possui legendas ativas.")
+        # Trata o link limpando parâmetros extras como ?si=...
+        clean_url = link_youtube.split("?")[0].split("&")[0]
+        link_yt_valido = clean_url
+        st.success(f"Link do YouTube registrado!")
 
 # Botão de Geração de Questões
 st.write("---")
 if st.button("🚀 Gerar Questões"):
     if not api_key:
         st.warning("⚠️ Cole sua Gemini API Key na barra lateral para continuar.")
-    elif not conteudo_processado:
-        st.warning("⚠️ Envie um arquivo, texto ou link do YouTube com o conteúdo da aula.")
+    elif not conteudo_processado and not link_yt_valido:
+        st.warning("⚠️ Envie um arquivo, texto ou cole o link do YouTube com o conteúdo da aula.")
     else:
-        with st.spinner("⏳ Analisando conteúdo e criando as questões..."):
+        with st.spinner("⏳ Analisando conteúdo e criando as questões com IA..."):
             try:
                 model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                contexto_entrada = ""
+                if link_yt_valido:
+                    contexto_entrada = f"Link da vídeo-aula do YouTube para analisar: {link_yt_valido}"
+                else:
+                    contexto_entrada = f"CONTEÚDO BASE PARA CRIAR AS QUESTÕES:\n{conteudo_processado[:15000]}"
+
                 prompt = f"""
-                Você é um professor preparador de exames e concursos. 
-                Com base ESTRITAMENTE no conteúdo fornecido abaixo, crie um simulado contendo exatamente {qtd_questoes} questões de múltipla escolha.
+                Você é um professor preparador de exames e concursos públicos. 
+                Com base no conteúdo/vídeo fornecido abaixo, crie um simulado contendo exatamente {qtd_questoes} questões de múltipla escolha.
                 
                 Regras:
                 1. Cada questão deve ter 4 alternativas (A, B, C, D).
-                2. Apresente primeiro todas as {qtd_questoes} questões.
-                3. Ao final do documento, inclua o GABARITO COMENTADO indicando a resposta correta e a explicação de cada uma.
+                2. Apresente primeiro todas as {qtd_questoes} questões em sequência.
+                3. Ao final do simulado, inclua a seção 'GABARITO COMENTADO' indicando a alternativa correta e a explicação detalhada de cada uma.
                 
                 Matéria/Contexto: {sala}
                 Nível do Teste: {nivel}
                 
-                CONTEÚDO BASE PARA CRIAR AS QUESTÕES:
-                {conteudo_processado[:15000]}
+                {contexto_entrada}
                 """
                 
                 response = model.generate_content(prompt)
@@ -104,4 +102,4 @@ if st.button("🚀 Gerar Questões"):
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar as questões: {e}")
-              
+                
