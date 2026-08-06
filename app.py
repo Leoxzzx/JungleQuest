@@ -72,7 +72,7 @@ if st.button("🚀 Gerar Questões"):
     else:
         with st.spinner("⏳ Analisando conteúdo e criando as questões com IA..."):
             try:
-                model = genai.GenerativeModel('gemini-2.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 
                 contexto_entrada = ""
                 if link_yt_valido:
@@ -100,4 +100,4 @@ if st.button("🚀 Gerar Questões"):
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar as questões: {e}")
-                
+            
