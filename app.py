@@ -66,7 +66,8 @@ with tab2:
 
 # Botão de Geração de Questões
 st.write("---")
-if st.button("🚀 Gerar Questões"):
+if st.button(model = genai.GenerativeModel('gemini-1.5-flash')
+ ):
     if not api_key:
         st.warning("⚠️ Cole sua Gemini API Key na barra lateral para continuar.")
     elif not conteudo_processado and not link_yt_valido:
