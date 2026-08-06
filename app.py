@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import pypdf
 
 # Configuração da página
@@ -11,8 +11,9 @@ st.title("🎓 Plataforma de Estudos com IA")
 st.sidebar.title("⚙️ Configurações")
 api_key = st.sidebar.text_input("Cole sua Gemini API Key aqui:", type="password")
 
+client = None
 if api_key:
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
 # Criar Salas por Matéria/Assunto
 st.sidebar.subheader("📚 Minhas Salas")
@@ -60,7 +61,7 @@ with tab2:
     if link_youtube:
         clean_url = link_youtube.split("?")[0].split("&")[0]
         link_yt_valido = clean_url
-        st.success(f"Link do YouTube registrado!")
+        st.success("Link do YouTube registrado!")
 
 # Botão de Geração de Questões
 st.write("---")
@@ -72,8 +73,6 @@ if st.button("🚀 Gerar Questões"):
     else:
         with st.spinner("⏳ Analisando conteúdo e criando as questões com IA..."):
             try:
-                model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                
                 contexto_entrada = ""
                 if link_yt_valido:
                     contexto_entrada = f"Link da vídeo-aula do YouTube para analisar: {link_yt_valido}"
@@ -95,7 +94,11 @@ if st.button("🚀 Gerar Questões"):
                 {contexto_entrada}
                 """
                 
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                )
+                
                 st.markdown("### 📝 Simulado Gerado")
                 st.markdown(response.text)
             except Exception as e:
